@@ -1,8 +1,11 @@
+
+
 package com.example.project11
 
 //  [이미지 관련] (Coil)
 // [파이어베이스 관련] (Firebase)
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -39,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -50,6 +54,12 @@ import coil.compose.AsyncImage
 import com.example.project11.ui.theme.Project11Theme
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,73 +110,92 @@ fun SplashScreen(
     modifier: Modifier = Modifier,
     onStartClicked: () -> Unit
 ) {
-    // 여기에 로고, 앱 이름, 버튼을 차곡차곡 쌓을 겁니다!
-    // 1. 힐링 배경색 (아이보리)을 칠한 '표면'을 만듭니다.
-    Surface(
-        modifier = modifier, // (전체 화면을 채우도록 설정됨)
-        color = Color(0xFFF5F5F0) // 힐링 배경색 (아이보리)
+    // 1. 배경 설정: Surface 대신 Box를 사용하여 배경색 위에 이미지를 겹칩니다.
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            // 피그마의 톤다운된 올리브 색상 배경 (0xFFF0F5E8에 가까움)
+            .background(Color(0xFFF0F5E8)) // 기존 아이보리(0xFFF5F5F0)보다 톤다운
     ) {
-        // 2. 'Column'을 사용해 모든 요소를 세로로, 가운데 정렬합니다.
+        // [클로버 배경 패턴]이 res/drawable에 'clover_pattern' 같은 이름으로 있다고 가정하고 추가
+        // 만약 배경 패턴 이미지가 없다면 이 코드를 제거하고 배경색만 사용합니다.
+        Image(
+            painter = painterResource(id = R.drawable.cloverimage),
+            contentDescription = null,
+            contentScale = ContentScale.FillBounds,
+            modifier = Modifier.fillMaxSize(),
+            alpha = 0.5f // 배경 패턴의 투명도를 낮춰 메인 요소가 잘 보이도록 설정
+        )
+
+
+        // 2. Column: 모든 요소를 세로로, 가운데 정렬
         Column(
             modifier = Modifier
-                .fillMaxSize() // Column도 꽉 채우고
-                .padding(16.dp), // 화면 좌우에 약간의 여백
-            verticalArrangement = Arrangement.Center, // 세로로 '가운데' 정렬
-            horizontalAlignment = Alignment.CenterHorizontally // 가로로도 '가운데' 정렬
+                .fillMaxSize()
+                .padding(32.dp), // 피그마처럼 여백을 더 넓게 설정
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 3. 여기에 '로고', '앱 이름', '버튼' 등을 넣을 겁니다!
-            // '로고' (Image)
+            // '로고' (Image): 피그마처럼 크게 중앙에 배치
             Image(
-                painter = painterResource(id = R.drawable.ic_eco), // 1-1에서 만든 아이콘
-                contentDescription = "앱 로고" // (앱 설명)
+                // R.drawable.ic_eco를 클로버 모양 아이콘으로 가정합니다.
+                painter = painterResource(id = R.drawable.ic_eco),
+                contentDescription = "앱 로고",
+                modifier = Modifier.size(120.dp), // 로고 크기 확대
+                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color(0xFF556B2F)) // 로고 색상을 올리브 톤으로 지정
             )
 
-            // 로고와 앱 이름 사이에 약간의 공간을 줍니다.
-            Spacer(modifier = Modifier.height(16.dp))
+            // 로고와 앱 이름 사이에 공간
+            Spacer(modifier = Modifier.height(32.dp))
+
             // '앱 이름' (Text)
             Text(
                 text = "쉼표",
-                fontSize = 32.sp, // 글자 크기
-                fontWeight = FontWeight.Bold // 굵게
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.DarkGray // 텍스트 색상도 톤다운
             )
 
-            // 앱 이름과 한 줄 소개 사이에 약간의 공간을 줍니다.
+            // 한 줄 소개
             Spacer(modifier = Modifier.height(8.dp))
-
-            // '한 줄 소개' (Text)
             Text(
                 text = "지친 일상 속, 쉼표가 되는 여행",
-                fontSize = 16.sp
+                fontSize = 18.sp,
+                color = Color.Gray
             )
 
-            // '한 줄 소개' (Text)
-            Text(
-                text = "지친 일상 속, 쉼표가 되는 여행",
-                fontSize = 16.sp
-            )
-
-            // --- 🚀 [1] 지금부터 이 아래 코드를 추가하세요! ---
-
-            // 내용(소개)과 버튼/학번 사이에 큰 공간을 줍니다.
-            // .weight(1f)는 '남은 공간을 모두 차지하라'는 뜻입니다.
+            // 내용과 버튼/학번 사이에 큰 공간
             Spacer(modifier = Modifier.weight(1f))
 
-            // '시작하기' 버튼
-            Button(
-                onClick = onStartClicked,  // TODO: 1-1. 클릭하면 다음 화면으로 넘어가기
-                modifier = Modifier.fillMaxWidth() // 버튼 가로로 꽉 채우기
+            // 3. '쉼표 찾으러 가기' 버튼 (피그마 디자인 적용)
+            // 'OutlinedButton'을 사용하여 테두리가 있는 디자인 구현
+            androidx.compose.material3.OutlinedButton(
+                onClick = onStartClicked,
+                modifier = Modifier
+                    .fillMaxWidth(0.7f) // 버튼 가로 길이 70%로 조정 (피그마와 유사)
+                    .height(56.dp), // 버튼 높이 증가
+                shape = RoundedCornerShape(8.dp), // 모서리 둥글게
+                border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF556B2F)) // 올리브색 테두리
             ) {
-
+                Text(
+                    text = "쉼표 찾으러 가기",
+                    fontSize = 18.sp,
+                    color = Color.DarkGray, // 텍스트 색상
+                    fontWeight = FontWeight.SemiBold
+                )
             }
 
-            // 버튼과 학번 사이에 약간의 공간을 줍니다.
-            Spacer(modifier = Modifier.height(16.dp))
+            // 버튼과 학번 사이에 공간
+            Spacer(modifier = Modifier.height(48.dp))
 
-            // '학번' (Text)
+            // '학번' (Text) - 피그마처럼 글자 크기를 키워 강조
             Text(
-                text = "2022125032 유승, 2023128006 김민준, 2022125078 신진성 ", // (팀원 학번 추가)
-                fontSize = 12.sp,
-                color = Color.Gray // 눈에 덜 띄게 회색으로
+                text = "2022125032 유승\n2023128006 김민준\n2022125078 신진성",
+                fontSize = 14.sp, // 글자 크기 조금 키움
+                color = Color.DarkGray,
+                lineHeight = 24.sp, // 줄 간격 추가
+                // 피그마처럼 중앙 정렬
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
     }
@@ -180,57 +209,192 @@ fun SplashScreenPreview() {
     }
 }
 
+
+
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
     onFestivalClicked: () -> Unit
 ) {
-    // 'Box'는 샌드위치처럼 요소를 겹쳐서 쌓을 때 사용합니다.
-    Box(modifier = modifier.fillMaxSize()) {
-
-        // 1. [맨 아래] 지도 배경 이미지
-        Image(
-            painter = painterResource(id = R.drawable.andongmap), // 아까 넣은 지도 파일명
-            contentDescription = "지도 배경",
-            contentScale = ContentScale.Crop, // 화면에 꽉 차게 자르기
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // 2. [중간] 핀 아이콘 (지도 위에 둥둥 떠있음)
-        Icon(
-            painter = painterResource(id = R.drawable.ic_place), // 아까 만든 핀 아이콘
-            contentDescription = "위치 핀",
-            tint = Color.Red, // 빨간색으로 칠하기
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        Column(
             modifier = Modifier
-                .size(48.dp) // 크기 키우기
-                .align(Alignment.Center) // 화면 정중앙에 배치
-        )
-
-        // 3. [맨 위] '축제/행사' 버튼 (우측 하단 배치)
-        Button(
-            onClick = onFestivalClicked,
-            modifier = Modifier
-                .align(Alignment.BottomEnd) // 우측 하단 정렬
-                .padding(16.dp) // 여백 주기
-        ) {
-            Text(text = "🎪 축제·행사")
-        }
-
-        // 4. [맨 위] 검색창 (상단 배치 - 일단 모양만)
-        // (복잡하니까 일단 텍스트만 띄워볼게요)
-        Surface(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 48.dp)
-                .fillMaxWidth(0.9f), // 가로 90% 채우기
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-            shadowElevation = 4.dp
+                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp)
         ) {
             Text(
-                text = "🔍 안동",
-                modifier = Modifier.padding(16.dp)
+                text = "숨겨진 소도시 찾기",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "소도시 검색",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.DarkGray
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray),
+                color = Color.White
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "검색",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "안동",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "카테고리",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.DarkGray
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                CategoryItem(text = "[ 전체 ]", isSelected = true)
+                CategoryItem(text = "[ 축제 ]")
+                CategoryItem(text = "[ 카페 ]")
+                CategoryItem(text = "[ 맛집 ]")
+                CategoryItem(text = "[ 놀거리 ]")
+            }
         }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .background(Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.andongmap),
+                contentDescription = "지도",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(16.dp))
+            )
+
+            Icon(
+                painter = painterResource(id = R.drawable.ic_place),
+                contentDescription = "핀",
+                tint = Color.Red,
+                modifier = Modifier
+                    .size(40.dp)
+                    .align(Alignment.Center)
+                    .padding(bottom = 20.dp)
+            )
+
+            Button(
+                onClick = onFestivalClicked,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(50),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF3F51B5)
+                )
+            ) {
+                Text(text = "🎪 축제·행사")
+            }
+
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(50),
+                color = Color(0xFFEEEEEE),
+                shadowElevation = 2.dp
+            ) {
+                Text(
+                    text = "📍 여행 명소",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shadowElevation = 8.dp,
+            color = Color.White
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                BottomNavItem(icon = Icons.Default.Home, text = "홈", isSelected = false)
+                BottomNavItem(icon = Icons.Default.Place, text = "지도", isSelected = true)
+                BottomNavItem(icon = Icons.Default.DateRange, text = "내 일정", isSelected = false)
+                BottomNavItem(icon = Icons.Default.List, text = "목록", isSelected = false)
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryItem(text: String, isSelected: Boolean = false) {
+    Text(
+        text = text,
+        fontSize = 13.sp,
+        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+        color = if (isSelected) Color.Black else Color.Gray
+    )
+}
+
+@Composable
+fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, isSelected: Boolean) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = text,
+            tint = if (isSelected) Color.Black else Color.Gray,
+            modifier = Modifier.size(28.dp)
+        )
+        Text(
+            text = text,
+            fontSize = 10.sp,
+            color = if (isSelected) Color.Black else Color.Gray,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
     }
 }
 
@@ -238,136 +402,243 @@ fun MapScreen(
 @Composable
 fun DetailScreen(
     modifier: Modifier = Modifier,
-    onBackClicked: () -> Unit // '뒤로가기(홈)' 기능
+    onBackClicked: () -> Unit
 ) {
-    // 1. 세로 스크롤을 위한 상태 저장
     val scrollState = rememberScrollState()
-
-    // 2. 찜하기 상태 저장 (눌렀는지 안 눌렀는지 기억)
+    // 1. 하트 상태 관리 (처음엔 빈 하트 false로 시작)
     var isFavorite by remember { mutableStateOf(false) }
 
+    // 데이터 변수
+    var festivalTitle by remember { mutableStateOf("안동 국제 탈춤 페스티벌") }
+    var festivalImageUrl by remember { mutableStateOf("") }
 
-    var festivalTitle by remember { mutableStateOf("로딩 중...") }
-    var festivalImageUrl by remember { mutableStateOf("") } // 이미지 주소 담을 변수
-
+    // 파이어베이스 데이터 가져오기
     LaunchedEffect(Unit) {
         val db = Firebase.firestore
         db.collection("festivals").document("andong").get()
             .addOnSuccessListener { document ->
                 if (document != null) {
-                    festivalTitle = document.getString("title") ?: "제목 없음"
-                    festivalImageUrl = document.getString("imageUrl") ?: "" // 주소 가져오기
+                    festivalTitle = document.getString("title") ?: "안동 국제 탈춤 페스티벌"
+                    festivalImageUrl = document.getString("imageUrl") ?: ""
                 }
             }
     }
 
-
-
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White) // 배경 흰색
-            .verticalScroll(scrollState) // ⭐ 핵심: 세로 스크롤 기능 추가!
+            .background(Color.White)
+            .verticalScroll(scrollState)
     ) {
-        // --- [1] 대표 이미지 영역 ---
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .height(250.dp)) {
-            // [Coil] 인터넷 이미지 불러오기
+        // [1] 상단 이미지 영역
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+        ) {
             AsyncImage(
-                model = festivalImageUrl, // Firebase에서 가져온 주소
-                contentDescription = "축제 대표 사진",
+                model = festivalImageUrl,
+                contentDescription = "축제 사진",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                // 로딩 중이거나 실패했을 때 보여줄 임시 이미지 (지도)
                 placeholder = painterResource(id = R.drawable.andongmap),
                 error = painterResource(id = R.drawable.andongmap)
             )
 
-            // 상단 아이콘 (공유, 찜하기)
+            // 상단 버튼들 (공유, 찜하기)
             Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(16.dp)
             ) {
-                // 공유 버튼 (기능은 나중에)
-                IconButton(onClick = { /* TODO: 공유 Intent */ }) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "공유",
-                        tint = Color.Black
-                    )
-                }
-                // 찜하기 버튼 (클릭하면 하트가 바뀜!)
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "공유",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+
+
                 IconButton(onClick = { isFavorite = !isFavorite }) {
                     Icon(
-                        // 찜 상태에 따라 아이콘 변경 (빈 하트 vs 꽉 찬 하트)
                         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "찜하기",
-                        tint = Color.Red
+                        // 눌리면 빨강, 안 눌리면 흰색
+                        tint = if (isFavorite) Color.Red else Color.White,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }
+
+            // 뒤로가기 버튼
+            IconButton(
+                onClick = onBackClicked,
+                modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
+            ) {
+                // 아이콘 필요 시 추가
+            }
         }
 
-        // --- [2] 축제 기본 정보 ---
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "안동 국제 탈춤 페스티벌",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("🗓️ 기간: 2025.11.10 ~ 11.13", fontSize = 16.sp)
-            Text("⏰ 시간: 매일 10:00 ~ 21:00", fontSize = 16.sp)
-            Text("📍 장소: 안동 탈춤 공원 일대", fontSize = 16.sp)
+        // [2] 상세 정보 내용
+        Column(modifier = Modifier.padding(20.dp)) {
+
+            // 제목
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = festivalTitle,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                // 제목 옆 작은 하트 (상태 연동)
+                IconButton(onClick = { isFavorite = !isFavorite }) {
+                    Icon(
+                        imageVector = if (isFavorite)
+                            Icons.Default.Favorite
+                        else
+                            Icons.Default.FavoriteBorder,
+                        contentDescription = "찜하기",
+                        tint = if (isFavorite) Color.Red else Color.Gray
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 정보 행
+            InfoRow(icon = "🗓️", text = "기간: 2024.11.10 ~ 11.13")
+            InfoRow(icon = "⏰", text = "시간: 매일 10:00 ~ 21:00")
+            InfoRow(icon = "📍", text = "장소: 안동 탈춤 공원 일대")
 
             Spacer(modifier = Modifier.height(24.dp))
+            Divider(thickness = 1.dp, color = Color(0xFFEEEEEE))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // --- [3] 티켓 정보 (유료) ---
+            // 티켓 정보
             Text("🎟️ 티켓 정보", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(color = Color.DarkGray, shape = RoundedCornerShape(4.dp)) {
-                    Text("[유료]", color = Color.White, modifier = Modifier.padding(4.dp))
+                Surface(color = Color(0xFF555555), shape = RoundedCornerShape(4.dp)) {
+                    Text("[유료]", color = Color.White, fontSize = 12.sp, modifier = Modifier.padding(6.dp, 2.dp))
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("1일권 20,000원", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
-            Text("(성인 기준 / 상세 요금 보기 >)", fontSize = 12.sp, color = Color.Gray)
+            Text("(성인 기준 / 상세 요금 보기 >)", fontSize = 13.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // 예매 버튼
             Button(
-                onClick = { /* TODO: 예매 사이트 연결 */ },
-                modifier = Modifier.fillMaxWidth()
+                onClick = { },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = Color(0xFF2F80ED)),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text("예매하러 가기 >")
+                Text("예매하러 가기 >", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(30.dp))
+            Divider(thickness = 8.dp, color = Color(0xFFF5F5F5))
+            Spacer(modifier = Modifier.height(30.dp))
 
-            // --- [4] 축제 후기 ---
-            Text("💬 축제 후기 (327)", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("⭐️ 4.9 / 5.0", fontSize = 14.sp)
-            Spacer(modifier = Modifier.height(8.dp))
+            // 주요 행사
+            Text("🎪 주요 행사", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // 후기 필터 태그 (디자인만)
-            Row {
-                Surface(color = Color(0xFFF0F0F0), shape = RoundedCornerShape(8.dp)) {
-                    Text("[ 📸 사진 후기 ]", modifier = Modifier.padding(8.dp), fontSize = 12.sp)
-                }
+            EventItem(icon = "🎭", title = "탈춤 체험 부스", desc = "직접 탈을 쓰고 춤을 배워보세요!")
+            EventItem(icon = "🥘", title = "안동 먹거리 장터", desc = "찜닭, 간고등어 등 지역 별미")
+            EventItem(icon = "🌍", title = "세계 탈 전시관", desc = "희귀한 전 세계 탈 구경")
+
+            Text("(행사 더보기 >)", fontSize = 13.sp, color = Color.Gray, modifier = Modifier.padding(top = 8.dp))
+
+            Spacer(modifier = Modifier.height(30.dp))
+            Divider(thickness = 8.dp, color = Color(0xFFF5F5F5))
+            Spacer(modifier = Modifier.height(30.dp))
+
+            // 축제 후기
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("💬 축제 후기(327)", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(8.dp))
-                Surface(color = Color(0xFFF0F0F0), shape = RoundedCornerShape(8.dp)) {
-                    Text("[ 👍 추천 ]", modifier = Modifier.padding(8.dp), fontSize = 12.sp)
+                Text("⭐️ 4.9", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(" / 5.0", fontSize = 14.sp, color = Color.Gray)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row {
+                ReviewTag("📸 사진 후기")
+                Spacer(modifier = Modifier.width(8.dp))
+                ReviewTag("👍 추천")
+                Spacer(modifier = Modifier.width(8.dp))
+                ReviewTag("🚗 주차 팁")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 리뷰 내용
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(modifier = Modifier.size(24.dp), shape = androidx.compose.foundation.shape.CircleShape, color = Color.LightGray) {}
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("덩실덩실 님", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(" · 1일 전", color = Color.Gray, fontSize = 12.sp)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("직접 탈춤 체험도 가능하고 먹거리도 많아서 아이들과 함께 방문하기 너무 좋아요!!! 내년에도 또 오고 싶네요.", fontSize = 14.sp, lineHeight = 20.sp)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 하단 사진들
+            Row(modifier = Modifier.fillMaxWidth()) {
+                AsyncImage(model = festivalImageUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.weight(1f).height(80.dp).clip(RoundedCornerShape(8.dp)), placeholder = painterResource(R.drawable.andongmap))
+                Spacer(modifier = Modifier.width(8.dp))
+                Image(painter = painterResource(id = R.drawable.andongmap), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.weight(1f).height(80.dp).clip(RoundedCornerShape(8.dp)))
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(modifier = Modifier.weight(1f).height(80.dp)) {
+                    Image(painter = painterResource(id = R.drawable.ic_eco), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)))
+                    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp)))
+                    Text("+3", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Center))
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("양실양실 님: 직접 탈춤 체험도 가능하고 먹거리도 많아서...", fontSize = 14.sp)
-
-            Spacer(modifier = Modifier.height(50.dp)) // 맨 아래 여백
+            Spacer(modifier = Modifier.height(50.dp))
         }
     }
+}
+
+// 보조 함수
+
+@Composable
+fun InfoRow(icon: String, text: String) {
+    Row(modifier = Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(icon, fontSize = 16.sp)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text, fontSize = 15.sp, color = Color(0xFF444444))
+    }
+}
+
+@Composable
+fun EventItem(icon: String, title: String, desc: String) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(icon, fontSize = 24.sp)
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(desc, fontSize = 13.sp, color = Color.Gray)
+        }
+    }
+}
+
+@Composable
+fun ReviewTag(text: String) {
+    Surface(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(4.dp)) {
+        Text(text, fontSize = 12.sp, color = Color.DarkGray, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+    }
+}
+
+@Composable
+fun Divider(thickness: androidx.compose.ui.unit.Dp, color: Color) {
+    Box(modifier = Modifier.fillMaxWidth().height(thickness).background(color))
 }
