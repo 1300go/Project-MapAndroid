@@ -68,8 +68,7 @@ class MainActivity : ComponentActivity() {
         // ... class MainActivity ... onCreate ...
         setContent {
             Project11Theme {
-                // '현재 화면' 상태 (1=표지, 2=지도, 3=상세정보)
-                // 처음엔 1번(표지)부터 시작!
+                // '현재 화면' 상태
                 var currentScreen by remember { mutableStateOf(1) }
 
                 // '현재 화면' 숫자에 따라 보여줄 화면을 바꿉니다.
@@ -86,7 +85,7 @@ class MainActivity : ComponentActivity() {
                         // [2. 지도 화면] 축제 버튼 누르면 -> 3번(상세)으로 이동
                         MapScreen(
                             modifier = Modifier.fillMaxSize(),
-                            onFestivalClicked = { currentScreen = 3 } // ⬅️ 여기가 해결되는 부분!
+                            onFestivalClicked = { currentScreen = 3 }
                         )
                     }
 
@@ -100,7 +99,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-// ...
     }
 }
 
@@ -110,53 +108,47 @@ fun SplashScreen(
     modifier: Modifier = Modifier,
     onStartClicked: () -> Unit
 ) {
-    // 1. 배경 설정: Surface 대신 Box를 사용하여 배경색 위에 이미지를 겹칩니다.
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            // 피그마의 톤다운된 올리브 색상 배경 (0xFFF0F5E8에 가까움)
-            .background(Color(0xFFF0F5E8)) // 기존 아이보리(0xFFF5F5F0)보다 톤다운
+            .background(Color(0xFFF0F5E8))
     ) {
-        // [클로버 배경 패턴]이 res/drawable에 'clover_pattern' 같은 이름으로 있다고 가정하고 추가
-        // 만약 배경 패턴 이미지가 없다면 이 코드를 제거하고 배경색만 사용합니다.
+
         Image(
             painter = painterResource(id = R.drawable.cloverimage),
             contentDescription = null,
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.fillMaxSize(),
-            alpha = 0.5f // 배경 패턴의 투명도를 낮춰 메인 요소가 잘 보이도록 설정
+            alpha = 0.5f
         )
 
 
-        // 2. Column: 모든 요소를 세로로, 가운데 정렬
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp), // 피그마처럼 여백을 더 넓게 설정
+                .padding(32.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // '로고' (Image): 피그마처럼 크게 중앙에 배치
             Image(
-                // R.drawable.ic_eco를 클로버 모양 아이콘으로 가정합니다.
                 painter = painterResource(id = R.drawable.ic_eco),
                 contentDescription = "앱 로고",
-                modifier = Modifier.size(120.dp), // 로고 크기 확대
-                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color(0xFF556B2F)) // 로고 색상을 올리브 톤으로 지정
+                modifier = Modifier.size(120.dp),
+                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color(0xFF556B2F))
             )
 
-            // 로고와 앱 이름 사이에 공간
             Spacer(modifier = Modifier.height(32.dp))
 
-            // '앱 이름' (Text)
+
             Text(
                 text = "쉼표",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.DarkGray // 텍스트 색상도 톤다운
+                color = Color.DarkGray
             )
 
-            // 한 줄 소개
+
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "지친 일상 속, 쉼표가 되는 여행",
@@ -164,37 +156,36 @@ fun SplashScreen(
                 color = Color.Gray
             )
 
-            // 내용과 버튼/학번 사이에 큰 공간
+
             Spacer(modifier = Modifier.weight(1f))
 
-            // 3. '쉼표 찾으러 가기' 버튼 (피그마 디자인 적용)
-            // 'OutlinedButton'을 사용하여 테두리가 있는 디자인 구현
+
             androidx.compose.material3.OutlinedButton(
                 onClick = onStartClicked,
                 modifier = Modifier
-                    .fillMaxWidth(0.7f) // 버튼 가로 길이 70%로 조정 (피그마와 유사)
-                    .height(56.dp), // 버튼 높이 증가
-                shape = RoundedCornerShape(8.dp), // 모서리 둥글게
-                border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF556B2F)) // 올리브색 테두리
+                    .fillMaxWidth(0.7f)
+                    .height(56.dp),
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF556B2F))
             ) {
                 Text(
                     text = "쉼표 찾으러 가기",
                     fontSize = 18.sp,
-                    color = Color.DarkGray, // 텍스트 색상
+                    color = Color.DarkGray,
                     fontWeight = FontWeight.SemiBold
                 )
             }
 
-            // 버튼과 학번 사이에 공간
+
             Spacer(modifier = Modifier.height(48.dp))
 
-            // '학번' (Text) - 피그마처럼 글자 크기를 키워 강조
+
             Text(
-                text = "2022125032 유승\n2023128006 김민준\n2022125078 신진성",
-                fontSize = 14.sp, // 글자 크기 조금 키움
+                text = "2022125032 유승\n2022125078 신진성",
+                fontSize = 14.sp,
                 color = Color.DarkGray,
-                lineHeight = 24.sp, // 줄 간격 추가
-                // 피그마처럼 중앙 정렬
+                lineHeight = 24.sp,
+
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
@@ -398,21 +389,20 @@ fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, text: S
     }
 }
 
-// ... (MapScreen 함수 끝) ...
+
 @Composable
 fun DetailScreen(
     modifier: Modifier = Modifier,
     onBackClicked: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    // 1. 하트 상태 관리 (처음엔 빈 하트 false로 시작)
     var isFavorite by remember { mutableStateOf(false) }
 
-    // 데이터 변수
+
     var festivalTitle by remember { mutableStateOf("안동 국제 탈춤 페스티벌") }
     var festivalImageUrl by remember { mutableStateOf("") }
 
-    // 파이어베이스 데이터 가져오기
+
     LaunchedEffect(Unit) {
         val db = Firebase.firestore
         db.collection("festivals").document("andong").get()
@@ -430,7 +420,7 @@ fun DetailScreen(
             .background(Color.White)
             .verticalScroll(scrollState)
     ) {
-        // [1] 상단 이미지 영역
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -445,7 +435,7 @@ fun DetailScreen(
                 error = painterResource(id = R.drawable.andongmap)
             )
 
-            // 상단 버튼들 (공유, 찜하기)
+
             Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -464,26 +454,26 @@ fun DetailScreen(
                     Icon(
                         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "찜하기",
-                        // 눌리면 빨강, 안 눌리면 흰색
+
                         tint = if (isFavorite) Color.Red else Color.White,
                         modifier = Modifier.size(28.dp)
                     )
                 }
             }
 
-            // 뒤로가기 버튼
+
             IconButton(
                 onClick = onBackClicked,
                 modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
             ) {
-                // 아이콘 필요 시 추가
+
             }
         }
 
-        // [2] 상세 정보 내용
+
         Column(modifier = Modifier.padding(20.dp)) {
 
-            // 제목
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = festivalTitle,
@@ -491,7 +481,7 @@ fun DetailScreen(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                // 제목 옆 작은 하트 (상태 연동)
+
                 IconButton(onClick = { isFavorite = !isFavorite }) {
                     Icon(
                         imageVector = if (isFavorite)
