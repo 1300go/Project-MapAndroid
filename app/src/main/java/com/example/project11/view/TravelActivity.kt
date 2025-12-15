@@ -1,7 +1,6 @@
 package com.example.project11
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +9,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -21,9 +21,8 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.firebase.firestore.FirebaseFirestore
 
-// Enum 정의
+
 enum class Region(val label: String) {
     SEOUL("서울"), GYEONGGI("경기"), INCHEON("인천"), GANGWON("강원"),
     CHUNGBUK("충북"), CHUNGNAM("충남"), DAEJEON("대전"), SEJONG("세종"),
@@ -32,6 +31,9 @@ enum class Region(val label: String) {
 }
 
 class TravelActivity : AppCompatActivity(), OnMapReadyCallback {
+
+    // ViewModel 연결
+    private val viewModel: TravelViewModel by viewModels()
 
     private lateinit var map: GoogleMap
     private lateinit var mapContainer: View
@@ -44,13 +46,16 @@ class TravelActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var llLocalList: LinearLayout
     private lateinit var rvPlaceList: RecyclerView
 
-    private val db = FirebaseFirestore.getInstance()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_travel)
 
-        // 1. XML 뷰 연결
+        initViews()
+        setupRegionButtons() // 지역 버튼(경기, 서울 등)은 고정이므로 미리 생성
+        setupObservers()     // ViewModel 관찰 시작
+    }
+
+    private fun initViews() {
         mapContainer = findViewById(R.id.map_container)
         btnSearchToggle = findViewById(R.id.btn_search_toggle)
         scrollRegions = findViewById(R.id.scroll_regions)
@@ -59,21 +64,16 @@ class TravelActivity : AppCompatActivity(), OnMapReadyCallback {
         llLocalList = findViewById(R.id.ll_local_list)
         rvPlaceList = findViewById(R.id.rv_place_list)
 
-        // 리사이클러뷰 설정
         rvPlaceList.layoutManager = LinearLayoutManager(this)
 
-        // 2. 지도 초기화
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map_fragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        // 3. 버튼 이벤트
+        // 버튼 클릭 -> ViewModel에 알림
         btnSearchToggle.setOnClickListener {
-            toggleRegionMenu()
+            viewModel.toggleMenu()
         }
-
-        // 4. 지역 버튼 생성
-        setupRegionButtons()
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -82,18 +82,50 @@ class TravelActivity : AppCompatActivity(), OnMapReadyCallback {
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(korea, 7f))
     }
 
-    private fun toggleRegionMenu() {
-        if (scrollRegions.visibility == View.VISIBLE) {
-            scrollRegions.visibility = View.GONE
-            scrollLocals.visibility = View.GONE
-            setMapSplitView(false)
-            if (::map.isInitialized) map.clear()
-        } else {
-            scrollRegions.visibility = View.VISIBLE
-            setMapSplitView(false)
+    // --- Observer Setup (핵심) ---
+    private fun setupObservers() {
+        // 1. 세부 지역 목록(안성, 평택 등)이 바뀌면 버튼 생성
+        viewModel.localNames.observe(this) { names ->
+            setupLocalButtons(names)
+        }
+
+        // 2. 장소 목록이 바뀌면 지도 마커 & 리스트 갱신
+        viewModel.places.observe(this) { places ->
+            updateMapMarkers(places)
+            rvPlaceList.adapter = PlaceAdapter(places)
+        }
+
+        // 3. 메뉴 보임/숨김 상태 관찰
+        viewModel.isMenuVisible.observe(this) { isVisible ->
+            if (isVisible) {
+                scrollRegions.visibility = View.VISIBLE
+                // 세부 지역 버튼이 있다면 같이 보여줌
+                if (llLocalList.childCount > 0) {
+                    scrollLocals.visibility = View.VISIBLE
+                }
+            } else {
+                scrollRegions.visibility = View.GONE
+                scrollLocals.visibility = View.GONE
+            }
+        }
+
+        // 4. 지도 분할 모드 관찰
+        viewModel.isMapSplit.observe(this) { isSplit ->
+            setMapSplitView(isSplit)
+            if (!isSplit && ::map.isInitialized) {
+                map.clear() // 분할 해제 시 지도 초기화
+            }
+        }
+
+        // 5. 토스트 메시지
+        viewModel.toastMessage.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
     }
 
+    // --- UI Logic ---
+
+    // [경기, 서울...] 버튼 생성 (고정 데이터)
     private fun setupRegionButtons() {
         for (region in Region.values()) {
             val button = Button(this)
@@ -102,8 +134,8 @@ class TravelActivity : AppCompatActivity(), OnMapReadyCallback {
             button.setTextColor(android.graphics.Color.BLACK)
 
             button.setOnClickListener {
-                // [수정 포인트 1] Travels 컬렉션에서 찾기
-                fetchLocalNamesFromTravels(region.label)
+                // ViewModel에 요청
+                viewModel.onRegionSelected(region.label)
             }
 
             val params = LinearLayout.LayoutParams(
@@ -115,36 +147,7 @@ class TravelActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    // --- [DB 로직 1] Travels 컬렉션에서 세부 지역(안성 등) 찾기 ---
-    private fun fetchLocalNamesFromTravels(regionLabel: String) {
-        Toast.makeText(this, "$regionLabel 지역 불러오는 중...", Toast.LENGTH_SHORT).show()
-
-        // 1. travels 컬렉션 조회
-        db.collection("travels")
-            .whereEqualTo("local_state", regionLabel) // 예: local_state가 "경기"인 문서들
-            .get()
-            .addOnSuccessListener { result ->
-                val names = mutableSetOf<String>()
-                for (document in result) {
-                    // 문서 필드에 있는 local_name을 가져옴
-                    val localName = document.getString("local_name")
-                    if (!localName.isNullOrEmpty()) {
-                        names.add(localName)
-                    }
-                }
-
-                if (names.isEmpty()) {
-                    Toast.makeText(this, "데이터가 없습니다.", Toast.LENGTH_SHORT).show()
-                } else {
-                    setupLocalButtons(names.toList().sorted())
-                }
-            }
-            .addOnFailureListener {
-                Log.e("Firestore", "Error getting documents: ", it)
-                Toast.makeText(this, "로딩 실패", Toast.LENGTH_SHORT).show()
-            }
-    }
-
+    // [안성, 수원...] 버튼 생성 (동적 데이터)
     private fun setupLocalButtons(localNames: List<String>) {
         llLocalList.removeAllViews()
         scrollLocals.visibility = View.VISIBLE
@@ -156,8 +159,8 @@ class TravelActivity : AppCompatActivity(), OnMapReadyCallback {
             button.setTextColor(android.graphics.Color.BLACK)
 
             button.setOnClickListener {
-                // [수정 포인트 2] 해당 지역의 places 하위 컬렉션 찾기
-                fetchPlacesFromSubCollection(name)
+                // ViewModel에 요청
+                viewModel.onLocalSelected(name)
             }
 
             val params = LinearLayout.LayoutParams(
@@ -167,67 +170,6 @@ class TravelActivity : AppCompatActivity(), OnMapReadyCallback {
             params.setMargins(0, 0, 0, 8)
             llLocalList.addView(button, params)
         }
-    }
-
-    // --- [DB 로직 2] Travels 문서 안의 Places 하위 컬렉션 조회 ---
-    private fun fetchPlacesFromSubCollection(localName: String) {
-        Toast.makeText(this, "$localName 검색 중...", Toast.LENGTH_SHORT).show()
-
-        // 1. 먼저 local_name이 "안성"인 부모 문서(Travels)를 찾는다.
-        db.collection("travels")
-            .whereEqualTo("local_name", localName)
-            .get()
-            .addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    Toast.makeText(this, "해당 지역 문서를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
-                    return@addOnSuccessListener
-                }
-
-                // 2. 부모 문서를 찾았으면, 그 문서 안의 'places' 컬렉션으로 들어간다.
-                val parentDoc = documents.documents[0] // 첫 번째 일치하는 문서
-
-                parentDoc.reference.collection("places")
-                    .get()
-                    .addOnSuccessListener { placeResult ->
-                        val list = mutableListOf<Place>()
-
-                        for (document in placeResult) {
-                            val name = document.getString("place_name") ?: ""
-                            val address = document.getString("place_address") ?: ""
-                            val imageUrl = document.getString("place_image") ?: ""
-
-                            // GeoPoint 처리
-                            val geoPoint = document.getGeoPoint("place_geo")
-                            val lat = geoPoint?.latitude ?: 0.0
-                            val lng = geoPoint?.longitude ?: 0.0
-
-                            // 리스트에 추가 (localName은 부모에서 가져온 값 사용)
-                            list.add(Place(name, address, imageUrl, lat, lng, localName))
-                        }
-
-                        if (list.isEmpty()) {
-                            Toast.makeText(this, "등록된 장소가 없습니다.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            // UI 업데이트
-                            updateUI(list)
-                        }
-                    }
-            }
-            .addOnFailureListener {
-                Log.e("Firestore", "Error getting places: ", it)
-            }
-    }
-
-    // UI 업데이트 (지도 & 리스트)
-    private fun updateUI(list: List<Place>) {
-        updateMapMarkers(list)
-
-        val adapter = PlaceAdapter(list)
-        rvPlaceList.adapter = adapter
-
-        setMapSplitView(true)
-        scrollRegions.visibility = View.GONE
-        scrollLocals.visibility = View.GONE
     }
 
     private fun setMapSplitView(isSplit: Boolean) {
@@ -262,7 +204,7 @@ class TravelActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    // Adapter 클래스
+    // Adapter는 Activity 내부에 유지 (사용자 선호 반영)
     class PlaceAdapter(private val places: List<Place>) : RecyclerView.Adapter<PlaceAdapter.PlaceViewHolder>() {
         class PlaceViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             val image: ImageView = view.findViewById(R.id.iv_place_image)

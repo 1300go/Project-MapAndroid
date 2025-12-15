@@ -672,12 +672,3 @@ fun ReviewTag(text: String) {
 fun Divider(thickness: androidx.compose.ui.unit.Dp, color: Color) {
     Box(modifier = Modifier.fillMaxWidth().height(thickness).background(color))
 }
-
-data class Place(
-    val name: String = "",       // place_name
-    val address: String = "",    // place_address
-    val imageUrl: String = "",   // place_image
-    val lat: Double = 0.0,       // place_geo [0]
-    val lng: Double = 0.0,        // place_geo [1]
-    val localName: String = ""
-)
