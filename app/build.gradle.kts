@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.cardview)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -64,4 +65,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.4.0")
     // [추가할 코드] Firestore (데이터베이스)
     implementation("com.google.firebase:firebase-firestore")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.cardview:cardview:1.0.0")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }

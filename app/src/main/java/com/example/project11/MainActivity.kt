@@ -4,6 +4,7 @@ package com.example.project11
 
 //  [이미지 관련] (Coil)
 // [파이어베이스 관련] (Firebase)
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -11,6 +12,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,6 +70,8 @@ class MainActivity : ComponentActivity() {
         // ... class MainActivity ... onCreate ...
         setContent {
             Project11Theme {
+                val context = LocalContext.current
+
                 // '현재 화면' 상태 (1=표지, 2=지도, 3=상세정보)
                 // 처음엔 1번(표지)부터 시작!
                 var currentScreen by remember { mutableStateOf(1) }
@@ -86,7 +90,11 @@ class MainActivity : ComponentActivity() {
                         // [2. 지도 화면] 축제 버튼 누르면 -> 3번(상세)으로 이동
                         MapScreen(
                             modifier = Modifier.fillMaxSize(),
-                            onFestivalClicked = { currentScreen = 3 } // ⬅️ 여기가 해결되는 부분!
+                            onFestivalClicked = { currentScreen = 3 }, // ⬅️ 여기가 해결되는 부분!
+                            onListClicked = {
+                                val intent = Intent(context, Reserve2::class.java)
+                                context.startActivity(intent)
+                            }
                         )
                     }
 
@@ -94,7 +102,14 @@ class MainActivity : ComponentActivity() {
                         // [3. 상세 화면] 뒤로가기 누르면 -> 2번(지도)으로 이동
                         DetailScreen(
                             modifier = Modifier.fillMaxSize(),
-                            onBackClicked = { currentScreen = 2 }
+                            onBackClicked = { currentScreen = 2 },
+                            onReserveClicked = {
+                                // Reserve1::class.java 는 이동하려는 액티비티 클래스 이름입니다.
+                                // 실제 파일명(클래스명)과 정확히 일치해야 합니다.
+                                val intent = Intent(context, Reserve1::class.java)
+                                context.startActivity(intent)
+                            }
+
                         )
                     }
                 }
@@ -214,7 +229,8 @@ fun SplashScreenPreview() {
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
-    onFestivalClicked: () -> Unit
+    onFestivalClicked: () -> Unit,
+    onListClicked: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -362,7 +378,12 @@ fun MapScreen(
                 BottomNavItem(icon = Icons.Default.Home, text = "홈", isSelected = false)
                 BottomNavItem(icon = Icons.Default.Place, text = "지도", isSelected = true)
                 BottomNavItem(icon = Icons.Default.DateRange, text = "내 일정", isSelected = false)
-                BottomNavItem(icon = Icons.Default.List, text = "목록", isSelected = false)
+                BottomNavItem(
+                    icon = Icons.Default.List,
+                    text = "목록",
+                    isSelected = false,
+                    onClick = onListClicked
+                )
             }
         }
     }
@@ -379,9 +400,10 @@ fun CategoryItem(text: String, isSelected: Boolean = false) {
 }
 
 @Composable
-fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, isSelected: Boolean) {
+fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, isSelected: Boolean,onClick: () -> Unit = {}) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable { onClick() }
     ) {
         Icon(
             imageVector = icon,
@@ -402,7 +424,8 @@ fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, text: S
 @Composable
 fun DetailScreen(
     modifier: Modifier = Modifier,
-    onBackClicked: () -> Unit
+    onBackClicked: () -> Unit,
+    onReserveClicked: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     // 1. 하트 상태 관리 (처음엔 빈 하트 false로 시작)
@@ -532,7 +555,7 @@ fun DetailScreen(
 
             // 예매 버튼
             Button(
-                onClick = { },
+                onClick = onReserveClicked, // 화면 이동 추가
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = Color(0xFF2F80ED)),
                 shape = RoundedCornerShape(12.dp)
