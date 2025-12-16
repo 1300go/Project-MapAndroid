@@ -408,7 +408,7 @@ fun DetailScreen(
         db.collection("festivals").document("andong").get()
             .addOnSuccessListener { document ->
                 if (document != null) {
-                    festivalTitle = document.getString("title") ?: "안동 국제 탈춤 페스티벌"
+                    festivalTitle = document.getString("title") ?: "제목 로딩중.."
                     festivalImageUrl = document.getString("imageUrl") ?: ""
                 }
             }
